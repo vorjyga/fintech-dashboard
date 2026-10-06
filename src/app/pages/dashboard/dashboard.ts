@@ -13,7 +13,7 @@ import { MatCardModule } from '@angular/material/card';
           <div class="py-6">
             <h2>Market data is coming next</h2>
             <p class="page-description">
-              The application shell is ready. The WebAssembly producer and live metrics will be
+              The WebAssembly integration is ready. Market generation and live metrics will be
               connected in the next implementation stages.
             </p>
           </div>

@@ -1,2 +1,17 @@
-// Stage 1 reserves the build hook; stage 2 replaces it with AssemblyScript compilation.
-console.info('Stage 1: Wasm source is scheduled for stage 2; no binary is generated.');
+import { mkdir } from 'node:fs/promises';
+import asc from 'assemblyscript/asc';
+
+await mkdir('assembly/build', { recursive: true });
+await mkdir('public/wasm', { recursive: true });
+for (const target of ['debug', 'release']) {
+  const { error, stdout, stderr } = await asc.main([
+    '--config',
+    'asconfig.json',
+    '--target',
+    target,
+  ]);
+  if (stdout.toString()) process.stdout.write(stdout.toString());
+  if (stderr.toString()) process.stderr.write(stderr.toString());
+  if (error) throw error;
+  console.info(`Built ${target} WebAssembly module.`);
+}

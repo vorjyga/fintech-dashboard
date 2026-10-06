@@ -21,6 +21,23 @@
     </nav>
   </header>
   <main id="main-content" class="mx-auto max-w-6xl px-4 pb-8 sm:px-8">
+    <div role="status" aria-live="polite" class="mb-6">
+      @let state = initialization.state();
+      @switch (state.status) {
+        @case ('loading') {
+          <p>Loading WebAssembly module…</p>
+        }
+        @case ('ready') {
+          <p>WebAssembly ready · ABI {{ state.abiVersion }} · Market generation coming next.</p>
+        }
+        @case ('error') {
+          <p>{{ state.message }}</p>
+          <button mat-button type="button" (click)="initialization.initialize()">
+            Retry initialization
+          </button>
+        }
+      }
+    </div>
     <router-outlet />
   </main>
 </div>

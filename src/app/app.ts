@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { WasmInitialization } from './core/wasm-initialization';
 import { MatButtonModule } from '@angular/material/button';
 
 @Component({
@@ -8,4 +9,6 @@ import { MatButtonModule } from '@angular/material/button';
   templateUrl: './app.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {}
+export class App {
+  protected readonly initialization = inject(WasmInitialization);
+}

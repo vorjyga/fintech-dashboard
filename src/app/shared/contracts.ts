@@ -35,9 +35,13 @@ export const WASM_ABI_VERSION = 1;
 export const MARKET_UPDATE_WORDS = 7;
 export const MARKET_UPDATE_BYTES = MARKET_UPDATE_WORDS * Uint32Array.BYTES_PER_ELEMENT;
 
-export interface MarketWasmExports extends WebAssembly.Exports {
+export interface WasmAbiExports extends WebAssembly.Exports {
   memory: WebAssembly.Memory;
   abiVersion(): number;
+}
+
+/** Full generator ABI implemented in stage 3. */
+export interface MarketWasmExports extends WasmAbiExports {
   init(instrumentCount: number, seed: number): number;
   generateBatch(size: number): number;
   getBatchLength(): number;

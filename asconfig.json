@@ -1,0 +1,17 @@
+{
+  "entries": ["assembly/index.ts"],
+  "options": { "runtime": "stub", "initialMemory": 1 },
+  "targets": {
+    "debug": {
+      "outFile": "assembly/build/market.debug.wasm",
+      "textFile": "assembly/build/market.debug.wat",
+      "debug": true,
+      "optimizeLevel": 0
+    },
+    "release": {
+      "outFile": "public/wasm/market.wasm",
+      "optimizeLevel": 3,
+      "shrinkLevel": 1
+    }
+  }
+}
