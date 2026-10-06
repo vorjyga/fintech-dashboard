@@ -4,6 +4,8 @@ An Angular application for simulated market data, based on the [original assignm
 
 [Repository](https://github.com/vorjyga/fintech-dashboard) · [Live demo](https://vorjyga.github.io/fintech-dashboard/#/dashboard) · [CI and deployments](https://github.com/vorjyga/fintech-dashboard/actions/workflows/ci-pages.yml)
 
+All ten implementation stages are complete. The public demo and automatic redeployment on a subsequent push were verified on 2026-10-06.
+
 The dashboard displays five live metrics per instrument. The settings page applies a validated configuration to a fresh run. A stateful AssemblyScript Wasm module generates every trade inside one Web Worker, which calculates exact cumulative metrics and sends throttled snapshots to Angular.
 
 ## Getting started

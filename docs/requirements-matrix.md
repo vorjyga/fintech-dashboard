@@ -2,7 +2,7 @@
 
 Source of truth: the English `Senior Frontend Developer Task.docx`. Stage numbers refer to `implementation-plan.md`. This matrix records delivered behavior rather than planned functionality.
 
-| Assignment requirement | Stage | Status after stage 9 | Implementation / validation |
+| Assignment requirement | Stage | Final status | Implementation / validation |
 | --- | --- | --- | --- |
 | Angular and TypeScript; dashboard and settings pages | 1 | Complete | Strict standalone Angular 21; lazy pages and navigation tests. |
 | Live table with one row per instrument and five metrics | 4, 7 | Complete | Material table displays all instruments and five formatted metrics; identity and controls tested. |
@@ -21,7 +21,7 @@ Source of truth: the English `Senior Frontend Developer Task.docx`. Stage number
 | Meaningful initialization errors and resource cleanup | 2, 5, 6 | Complete | Load/runtime errors stop the controller; timers, pending fetches and old module state are released. Angular preserves last rows, shows error/Retry; browser HTTP 404 recovery and Worker termination verified. |
 | Mandatory metric, settings, lifecycle and generator tests | 3–9 | Complete | Real Wasm, metrics, validation, scheduling, Worker Pause/Resume and lifecycle tests provided; Angular service, form, table and navigation tests included. 25 real Wasm + 72 Angular/Vitest tests. |
 | Repository, Wasm sources and README with commands | 1–3, 10 | Complete | Application, stateful AssemblyScript source, tests, build hooks and README commands present. |
-| Automatic deployment on push; repository and live demo links | 10 | Pending | Pages base href supported; workflow and live demo pending. |
+| Automatic deployment on push; repository and live demo links | 10 | Complete | Push/PR validation and automatic main deployment; two successful pushes verified via public build-info.json and changed HTML. Repository/demo links in README; stage 10 report links CI runs. |
 | Explain and modify implementation | All | Complete | Implementation plan and documented architecture included. |
 
 Material, Tailwind, OnPush, hash routing and ESLint are agreed implementation decisions; the assignment does not require those specific libraries or patterns.
