@@ -4,7 +4,7 @@ An Angular application for simulated market data, based on the [original assignm
 
 ## Current progress
 
-Stages 1–2 provide the Angular 21 shell and real WebAssembly initialization inside a Web Worker. The minimal AssemblyScript module exports memory and ABI version 1. Both pages show initialization status and provide Retry on failure. Market generation, live metrics, editable settings and deployment follow in later stages.
+Stages 1–3 provide the Angular 21 shell, Web Worker initialization and a stateful AssemblyScript market generator. The Wasm module implements xorshift32, bounded prices and reusable market-update batches. Both pages show initialization status and provide Retry on failure. Scheduled generation, live metrics, editable settings and deployment follow in later stages.
 
 ## Getting started
 
@@ -41,8 +41,8 @@ Production output is written to `dist/fintech-dashboard/browser`. GitHub Pages d
 
 Hash routing allows both pages to be reloaded on static hosting. Unknown or empty routes redirect to the dashboard. Material supplies UI components; Tailwind handles layout. The Material theme lives in `src/styles.scss`, while Tailwind is processed separately through PostCSS in `src/tailwind.css`. Preflight is omitted to preserve Material component styling. System fonts avoid a runtime font download.
 
-Tests cover the real compiled Wasm exports, HTTP/network/binary/ABI errors, abort handling, cancelled and superseded loading, base URL resolution, worker replacement and cleanup, and shell navigation. Later stages add market generator, metrics, settings and pause/resume tests.
+Tests execute both real compiled generators and verify batch sizes, valid values, seeded determinism, reset and continuation, invalid calls, price boundaries and constant memory usage. Tests also cover HTTP/network/binary/ABI errors, abort handling, cancelled and superseded loading, base URL resolution, worker replacement and cleanup, and shell navigation. Later stages add metrics, settings and pause/resume tests.
 
-The worker downloads `wasm/market.wasm` relative to `document.baseURI`, checks HTTP status and uses `WebAssembly.instantiate` on an ArrayBuffer. A root service owns the worker across navigation. AssemblyScript aborts and native worker errors produce visible messages; Retry creates a new worker. No market trades are generated yet.
+The worker downloads `wasm/market.wasm` relative to `document.baseURI`, checks HTTP status and uses `WebAssembly.instantiate` on an ArrayBuffer. A root service owns the worker across navigation. AssemblyScript aborts and native worker errors produce visible messages; Retry creates a new worker. On initialization the Worker creates a seed and calls the generator’s init export. The generator is implemented and tested; continuous calls and metric snapshots are connected in stages 4–5. See [the generator ABI and model](assembly/README.md).
 
 The package overrides keep Vitest and its optional browser peer on 4.1.11. This avoids npm 10 resolving mismatched Vitest 4/5 peers and keeps the test toolchain on the audited version.

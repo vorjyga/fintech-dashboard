@@ -15,6 +15,12 @@ export function createInitializationHandler(
     try {
       const wasm = await load(command.wasmUrl, pendingLoad.signal);
       if (currentLoad !== pendingLoad || pendingLoad.signal.aborted) return;
+      if (wasm.init(command.settings.instrumentCount, command.seed) !== 0) {
+        throw new WasmInitializationError(
+          'settings',
+          'The market module rejected the instrument count.',
+        );
+      }
       send({ type: 'ready', runId: command.runId, abiVersion: wasm.abiVersion() });
     } catch (error) {
       if (currentLoad !== pendingLoad || pendingLoad.signal.aborted) return;

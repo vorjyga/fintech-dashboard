@@ -3,7 +3,13 @@ import { createInitializationHandler } from './initialize-run';
 import { loadWasm, WasmInitializationError } from './wasm-loader';
 
 const load = vi.fn<typeof loadWasm>();
-const wasm = { memory: new WebAssembly.Memory({ initial: 1 }), abiVersion: () => 1 };
+const wasm = {
+  memory: new WebAssembly.Memory({ initial: 1 }),
+  abiVersion: () => 1,
+  init: vi.fn(() => 0),
+  generateBatch: () => 0,
+  getBatchLength: () => 0,
+};
 const command = (runId: number): ProducerCommand => ({
   type: 'start',
   runId,
@@ -13,12 +19,17 @@ const command = (runId: number): ProducerCommand => ({
 });
 
 describe('Worker initialization handler', () => {
-  afterEach(() => vi.resetAllMocks());
+  afterEach(() => {
+    load.mockReset();
+    wasm.init.mockReset().mockReturnValue(0);
+  });
 
   it('sends ready only after Wasm execution succeeds', async () => {
+    wasm.init.mockReturnValue(0);
     load.mockResolvedValue(wasm);
     const send = vi.fn();
     await createInitializationHandler(send, load)(command(1));
+    expect(wasm.init).toHaveBeenCalledExactlyOnceWith(5, 1);
     expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'ready', runId: 1, abiVersion: 1 });
   });
 
@@ -41,6 +52,19 @@ describe('Worker initialization handler', () => {
     completeOld(wasm);
     await old;
     expect(send).toHaveBeenCalledExactlyOnceWith({ type: 'ready', runId: 2, abiVersion: 1 });
+  });
+
+  it('reports rejected initialization without sending ready', async () => {
+    wasm.init.mockReturnValueOnce(1);
+    load.mockResolvedValue(wasm);
+    const send = vi.fn();
+    await createInitializationHandler(send, load)(command(4));
+    expect(send).toHaveBeenCalledExactlyOnceWith({
+      type: 'error',
+      runId: 4,
+      stage: 'settings',
+      message: expect.stringContaining('instrument count'),
+    });
   });
 
   it('preserves the error stage and runId', async () => {

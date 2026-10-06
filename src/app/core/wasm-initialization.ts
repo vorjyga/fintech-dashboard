@@ -71,7 +71,7 @@ export class WasmInitialization {
         type: 'start',
         runId,
         settings: { ...DEFAULT_PRODUCER_SETTINGS },
-        seed: 1,
+        seed: 0, // The worker supplies a fresh seed before initialization.
         wasmUrl: marketWasmUrl(this.document.baseURI),
       };
       worker.postMessage(command);

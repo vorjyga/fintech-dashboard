@@ -1,4 +1,4 @@
-import { WASM_ABI_VERSION, WasmAbiExports, ProducerErrorStage } from '../shared/contracts';
+import { WASM_ABI_VERSION, MarketWasmExports, ProducerErrorStage } from '../shared/contracts';
 
 export class WasmInitializationError extends Error {
   constructor(
@@ -11,7 +11,7 @@ export class WasmInitializationError extends Error {
 }
 
 /** ArrayBuffer instantiation also works on hosts that serve Wasm with a generic MIME type. */
-export async function loadWasm(wasmUrl: string, signal?: AbortSignal): Promise<WasmAbiExports> {
+export async function loadWasm(wasmUrl: string, signal?: AbortSignal): Promise<MarketWasmExports> {
   let bytes: ArrayBuffer;
   try {
     const response = await fetch(wasmUrl, { signal });
@@ -57,7 +57,7 @@ export async function loadWasm(wasmUrl: string, signal?: AbortSignal): Promise<W
       'The market module is missing its memory or ABI version export.',
     );
   }
-  const wasm = exports as WasmAbiExports;
+  const wasm = exports as MarketWasmExports;
   let version: number;
   try {
     version = wasm.abiVersion();
@@ -73,6 +73,11 @@ export async function loadWasm(wasmUrl: string, signal?: AbortSignal): Promise<W
       'abi',
       `Unsupported market ABI ${version}; expected ${WASM_ABI_VERSION}.`,
     );
+  }
+  for (const name of ['init', 'generateBatch', 'getBatchLength']) {
+    if (typeof exports[name] !== 'function') {
+      throw new WasmInitializationError('abi', `The market module is missing its ${name} export.`);
+    }
   }
   return wasm;
 }

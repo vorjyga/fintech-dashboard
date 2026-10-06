@@ -1,5 +1,6 @@
 import { loadWasm } from './wasm-loader';
 
+const generatorExports = { init: () => 0, generateBatch: () => 0, getBatchLength: () => 0 };
 const emptyModule = new Uint8Array([0, 97, 115, 109, 1, 0, 0, 0]);
 
 function mockModule(exports: WebAssembly.Exports) {
@@ -22,7 +23,7 @@ describe('Wasm loader', () => {
 
   it('fetches an ArrayBuffer with cancellation and verifies the ABI', async () => {
     const memory = new WebAssembly.Memory({ initial: 1 });
-    const instantiate = mockModule({ memory, abiVersion: () => 1 });
+    const instantiate = mockModule({ ...generatorExports, memory, abiVersion: () => 1 });
     const controller = new AbortController();
     expect(
       (await loadWasm('https://example.test/wasm/market.wasm', controller.signal)).memory,
@@ -70,8 +71,17 @@ describe('Wasm loader', () => {
     });
   });
 
+  it('rejects an ABI version 1 module without the generator exports', async () => {
+    mockModule({ memory: new WebAssembly.Memory({ initial: 1 }), abiVersion: () => 1 });
+    await expect(loadWasm('/market.wasm')).rejects.toMatchObject({
+      stage: 'abi',
+      message: expect.stringContaining('init export'),
+    });
+  });
+
   it('turns AssemblyScript abort into a meaningful runtime error', async () => {
     const instantiate = mockModule({
+      ...generatorExports,
       memory: new WebAssembly.Memory({ initial: 1 }),
       abiVersion: () => 1,
     });
