@@ -1,0 +1,26 @@
+<div class="min-h-screen">
+  <header
+    class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-8"
+  >
+    <a mat-button routerLink="/dashboard" aria-label="Fintech Dashboard home">Fintech Dashboard</a>
+    <nav aria-label="Main navigation" class="flex flex-wrap gap-2">
+      <a
+        mat-button
+        routerLink="/dashboard"
+        routerLinkActive="active-link"
+        ariaCurrentWhenActive="page"
+        >Dashboard</a
+      >
+      <a
+        mat-button
+        routerLink="/settings"
+        routerLinkActive="active-link"
+        ariaCurrentWhenActive="page"
+        >Settings</a
+      >
+    </nav>
+  </header>
+  <main id="main-content" class="mx-auto max-w-6xl px-4 pb-8 sm:px-8">
+    <router-outlet />
+  </main>
+</div>
