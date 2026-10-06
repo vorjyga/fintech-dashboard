@@ -108,4 +108,15 @@ describe('ProducerService', () => {
     const unsupported = TestBed.inject(ProducerService); unsupported.start();
     expect(unsupported.error()).toContain('does not support');
   });
+  it('terminates and reports failures while sending start or a control command', () => {
+    workers[0].postMessage.mockImplementation(() => { throw new Error('send failed'); });
+    running(workers[0], 1); service.pause();
+    expect(service.error()).toBe('send failed'); expect(workers[0].terminate).toHaveBeenCalledOnce();
+    TestBed.resetTestingModule();
+    const broken = new FakeWorker(); broken.postMessage.mockImplementation(() => { throw new Error('start failed'); });
+    TestBed.configureTestingModule({ providers: [{ provide: MARKET_WORKER_FACTORY, useValue: () => broken }] });
+    const next = TestBed.inject(ProducerService); next.start();
+    expect(next.error()).toBe('start failed'); expect(broken.terminate).toHaveBeenCalledOnce();
+  });
+
 });

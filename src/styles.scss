@@ -25,6 +25,7 @@ body {
   font: var(--mat-sys-body-large);
 }
 
+@layer base {
 h1,
 h2,
 p {
@@ -35,6 +36,7 @@ h1 {
 }
 h2 {
   font: var(--mat-sys-title-large);
+}
 }
 .page-description {
   color: var(--mat-sys-on-surface-variant);
