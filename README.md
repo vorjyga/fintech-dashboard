@@ -4,7 +4,7 @@ An Angular application for simulated market data, based on the [original assignm
 
 ## Current progress
 
-Stages 1–3 provide the Angular 21 shell, Web Worker initialization and a stateful AssemblyScript market generator. The Wasm module implements xorshift32, bounded prices and reusable market-update batches. Both pages show initialization status and provide Retry on failure. Scheduled generation, live metrics, editable settings and deployment follow in later stages.
+Stages 1–4 provide the Angular 21 shell, Web Worker initialization and a stateful AssemblyScript market generator, exact cumulative metrics and display formatters. The Wasm module implements xorshift32, bounded prices and reusable market-update batches. Both pages show initialization status and provide Retry on failure. Scheduled generation, the live metrics table, editable settings and deployment follow in later stages.
 
 ## Getting started
 
@@ -41,8 +41,16 @@ Production output is written to `dist/fintech-dashboard/browser`. GitHub Pages d
 
 Hash routing allows both pages to be reloaded on static hosting. Unknown or empty routes redirect to the dashboard. Material supplies UI components; Tailwind handles layout. The Material theme lives in `src/styles.scss`, while Tailwind is processed separately through PostCSS in `src/tailwind.css`. Preflight is omitted to preserve Material component styling. System fonts avoid a runtime font download.
 
-Tests execute both real compiled generators and verify batch sizes, valid values, seeded determinism, reset and continuation, invalid calls, price boundaries and constant memory usage. Tests also cover HTTP/network/binary/ABI errors, abort handling, cancelled and superseded loading, base URL resolution, worker replacement and cleanup, and shell navigation. Later stages add metrics, settings and pause/resume tests.
+Tests execute both real compiled generators and verify batch sizes, valid values, seeded determinism, reset and continuation, invalid calls, price boundaries and constant memory usage. Tests also cover HTTP/network/binary/ABI errors, abort handling, cancelled and superseded loading, base URL resolution, worker replacement and cleanup, and shell navigation. Metric tests cover the worked example, zero denominators, independent instruments, repeated trades, large bigint sums, final-only rounding and integration with the real release Wasm binary. Later stages add settings and pause/resume tests.
 
-The worker downloads `wasm/market.wasm` relative to `document.baseURI`, checks HTTP status and uses `WebAssembly.instantiate` on an ArrayBuffer. A root service owns the worker across navigation. AssemblyScript aborts and native worker errors produce visible messages; Retry creates a new worker. On initialization the Worker creates a seed and calls the generator’s init export. The generator is implemented and tested; continuous calls and metric snapshots are connected in stages 4–5. See [the generator ABI and model](assembly/README.md).
+The worker downloads `wasm/market.wasm` relative to `document.baseURI`, checks HTTP status and uses `WebAssembly.instantiate` on an ArrayBuffer. A root service owns the worker across navigation. AssemblyScript aborts and native worker errors produce visible messages; Retry creates a new worker. On initialization the Worker creates a seed and calls the generator’s init export. The generator is implemented and tested; continuous calls and metric snapshots are connected in stage 5. See [the generator ABI and model](assembly/README.md).
 
 The package overrides keep Vitest and its optional browser peer on 4.1.11. This avoids npm 10 resolving mismatched Vitest 4/5 peers and keeps the test toolchain on the audited version.
+
+## Metric calculations
+
+`src/app/worker/market-aggregator.ts` is independent of Angular and the Worker API. Create one `MarketAggregator` per run and call `consume(update)` once for every generated trade (or `consumeBatch(iterable)`). It stores only latest trade/book values and cumulative volume/cost for each instrument, without retaining events or batches. Identical trades are separate events and are counted separately.
+
+`snapshot()` returns detached rows in instrument order. Spread and imbalance use the latest book; zero denominators return null. Volume and trade cost use bigint, with each operand converted before multiplication. VWAP remains the exact numerator/denominator ratio.
+
+`src/app/shared/metric-formatters.ts` provides USD formatting, exact volume formatting and two-decimal imbalance. VWAP rounds only for display, using integer division; half a cent rounds upward. Currency formatting preserves bigint precision without conversion to Number. Unavailable values use `—`, while initial volume uses `0`.
