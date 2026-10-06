@@ -2,24 +2,24 @@
 
 Source of truth: the English `Senior Frontend Developer Task.docx`. Stage numbers refer to `implementation-plan.md`. This matrix records delivered behavior rather than planned functionality.
 
-| Assignment requirement | Stage | Status after stage 4 | Implementation / validation |
+| Assignment requirement | Stage | Status after stage 5 | Implementation / validation |
 | --- | --- | --- | --- |
 | Angular and TypeScript; dashboard and settings pages | 1 | Shell complete | Strict standalone Angular 21; lazy pages and navigation tests. |
 | Live table with one row per instrument and five metrics | 4, 7 | Pending | Dashboard currently shows an explicit placeholder. |
 | Cumulative volume/VWAP; count every trade once | 4 | Calculation complete | Pure aggregator uses bigint cost/volume and exact VWAP ratios; real Wasm integration test checks all trades. |
 | Unavailable initial values, zero denominators, currency formatting | 4, 7 | Calculation/formatting complete; UI pending | Null metrics and zero volume; exact USD and half-up VWAP formatting tested. |
-| Pause/resume, producer status and preserved totals | 5–7 | Pending | Typed command/status protocol defined; initialization status implemented. |
+| Pause/resume, producer status and preserved totals | 5–7 | Pending | Worker Pause/Resume and final snapshots implemented; Angular controls/status presentation pending. |
 | Validated integer settings and specified defaults/ranges | 6, 8 | Defaults displayed; form pending | Defaults: 5 instruments, 100 updates, 500 ms. |
 | Apply resets the run; draft edits have no immediate effect | 6, 8 | Pending | Producer settings contract defined. |
 | Navigation preserves one producer and active state | 6 | Pending | Navigation exists; no producer is created yet. |
-| Reject results from previous runs | 5, 6 | Pending | Protocol includes runId, sequence and commandId; superseded initialization results are rejected. |
+| Reject results from previous runs | 5, 6 | Pending | Worker rejects superseded loading, old run/command IDs and canceled callbacks; Angular message filtering follows in stage 6. |
 | Candidate-written Wasm; real randomness and stateful prices | 2, 3 | Complete | AssemblyScript xorshift32, persistent instrument bids and numeric batch ABI; both real binaries tested. |
-| Execute Wasm inside a Web Worker | 2, 5 | Initialization complete; generation pending | Actual release generator is loaded and initialized in the Angular CLI worker; scheduled generation follows in stage 5. |
+| Execute Wasm inside a Web Worker | 2, 5 | Complete | Real Wasm continuously generates in the Angular CLI worker; protocol checked in a production browser. |
 | Valid updates and requested batch sizes | 3 | Complete | All batch sizes 1–1000, counts 1–50, value ranges and clamping verified against real Wasm. |
 | Integer cents; rounding only for display; no full event history | 3, 4, 7 | Pending | Generator uses integer cents; aggregator stores only current values and bigint totals; VWAP rounds only in display helpers. |
-| Usable UI at higher generation rates | 5, 9 | Pending | Responsive shell provided; load verification requires producer. |
-| Meaningful initialization errors and resource cleanup | 2, 5, 6 | Pending | HTTP/binary/ABI/abort and worker errors are displayed; Retry and cleanup implemented. |
-| Mandatory metric, settings, lifecycle and generator tests | 3–9 | Pending | Real Wasm generator, metric/formatting/integration and Worker initialization tests provided; settings/control tests pending. |
+| Usable UI at higher generation rates | 5, 9 | Pending | Worker throttles snapshots to 100 ms and consumes all trades; full UI load verification follows in stage 9. |
+| Meaningful initialization errors and resource cleanup | 2, 5, 6 | Pending | Load/runtime errors stop the controller; timers, pending fetches and old module state are released. Angular shell displays errors/Retry; full run state follows in stage 6. |
+| Mandatory metric, settings, lifecycle and generator tests | 3–9 | Pending | Real Wasm, metrics, validation, scheduling, Worker Pause/Resume and lifecycle tests provided; Angular service/form tests pending. |
 | Repository, Wasm sources and README with commands | 1–3, 10 | Partially complete | Application, minimal Wasm source, tests and README commands present. Stateful generator source and tests included. |
 | Automatic deployment on push; repository and live demo links | 10 | Pending | Pages base href supported; workflow and live demo pending. |
 | Explain and modify implementation | All | In progress | Implementation plan and documented architecture included. |

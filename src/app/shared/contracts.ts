@@ -53,6 +53,7 @@ export type ProducerCommand =
 
 export type ProducerErrorStage = 'settings' | 'load' | 'instantiate' | 'abi' | 'runtime';
 
+/** Initial running status uses commandId 0; pause/resume acknowledgements echo positive ids. */
 export type ProducerEvent =
   | { type: 'ready'; runId: number; abiVersion: number }
   | { type: 'snapshot'; runId: number; sequence: number; rows: InstrumentSnapshot[] }
