@@ -30,6 +30,7 @@ describe('Wasm loader', () => {
     ).toBe(memory);
     expect(fetch).toHaveBeenCalledWith('https://example.test/wasm/market.wasm', {
       signal: controller.signal,
+      cache: 'no-cache',
     });
     expect(instantiate.mock.calls[0][0]).toBeInstanceOf(ArrayBuffer);
   });

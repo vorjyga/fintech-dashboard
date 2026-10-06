@@ -1,0 +1,59 @@
+name: Validate and deploy
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+# Serialize each ref through validation and deployment. A later main deployment
+# cannot finish before an earlier one and then be overwritten by it.
+concurrency:
+  group: ci-pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build:pages
+      - name: Record deployed revision
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: node -e 'require("node:fs").writeFileSync("dist/fintech-dashboard/browser/build-info.json", JSON.stringify({revision:process.env.GITHUB_SHA}))'
+      - name: Configure Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/fintech-dashboard/browser
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

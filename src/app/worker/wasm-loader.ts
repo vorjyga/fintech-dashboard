@@ -14,7 +14,7 @@ export class WasmInitializationError extends Error {
 export async function loadWasm(wasmUrl: string, signal?: AbortSignal): Promise<MarketWasmExports> {
   let bytes: ArrayBuffer;
   try {
-    const response = await fetch(wasmUrl, { signal });
+    const response = await fetch(wasmUrl, { signal, cache: 'no-cache' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     bytes = await response.arrayBuffer();
   } catch (error) {
