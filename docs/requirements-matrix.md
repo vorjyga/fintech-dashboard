@@ -2,7 +2,7 @@
 
 Source of truth: the English `Senior Frontend Developer Task.docx`. Stage numbers refer to `implementation-plan.md`. This matrix records delivered behavior rather than planned functionality.
 
-| Assignment requirement | Stage | Status after stage 5 | Implementation / validation |
+| Assignment requirement | Stage | Status after stage 6 | Implementation / validation |
 | --- | --- | --- | --- |
 | Angular and TypeScript; dashboard and settings pages | 1 | Shell complete | Strict standalone Angular 21; lazy pages and navigation tests. |
 | Live table with one row per instrument and five metrics | 4, 7 | Pending | Dashboard currently shows an explicit placeholder. |
@@ -11,8 +11,8 @@ Source of truth: the English `Senior Frontend Developer Task.docx`. Stage number
 | Pause/resume, producer status and preserved totals | 5–7 | Pending | Worker Pause/Resume and final snapshots implemented; Angular controls/status presentation pending. |
 | Validated integer settings and specified defaults/ranges | 6, 8 | Defaults displayed; form pending | Defaults: 5 instruments, 100 updates, 500 ms. |
 | Apply resets the run; draft edits have no immediate effect | 6, 8 | Pending | Producer settings contract defined. |
-| Navigation preserves one producer and active state | 6 | Pending | Navigation exists; no producer is created yet. |
-| Reject results from previous runs | 5, 6 | Pending | Worker rejects superseded loading, old run/command IDs and canceled callbacks; Angular message filtering follows in stage 6. |
+| Navigation preserves one producer and active state | 6 | Complete | Root singleton owns one worker across routes; idempotent start and cleanup tested. |
+| Reject results from previous runs | 5, 6 | Complete | Worker rejects superseded loading, old run/command IDs and canceled callbacks; Angular rejects old run IDs, snapshot sequences and incorrect control acknowledgements. |
 | Candidate-written Wasm; real randomness and stateful prices | 2, 3 | Complete | AssemblyScript xorshift32, persistent instrument bids and numeric batch ABI; both real binaries tested. |
 | Execute Wasm inside a Web Worker | 2, 5 | Complete | Real Wasm continuously generates in the Angular CLI worker; protocol checked in a production browser. |
 | Valid updates and requested batch sizes | 3 | Complete | All batch sizes 1–1000, counts 1–50, value ranges and clamping verified against real Wasm. |

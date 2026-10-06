@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { WasmInitialization } from './core/wasm-initialization';
+import { ProducerService } from './core/producer.service';
 import { MatButtonModule } from '@angular/material/button';
 
 @Component({
@@ -10,5 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  protected readonly initialization = inject(WasmInitialization);
+  protected readonly producer = inject(ProducerService);
+
+  constructor() { this.producer.start(); }
 }

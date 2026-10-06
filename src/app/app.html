@@ -22,20 +22,10 @@
   </header>
   <main id="main-content" class="mx-auto max-w-6xl px-4 pb-8 sm:px-8">
     <div role="status" aria-live="polite" class="mb-6">
-      @let state = initialization.state();
-      @switch (state.status) {
-        @case ('loading') {
-          <p>Loading WebAssembly module…</p>
-        }
-        @case ('ready') {
-          <p>WebAssembly ready · ABI {{ state.abiVersion }} · Live market data coming next.</p>
-        }
-        @case ('error') {
-          <p>{{ state.message }}</p>
-          <button mat-button type="button" (click)="initialization.initialize()">
-            Retry initialization
-          </button>
-        }
+      <p>Producer: {{ producer.status() }}</p>
+      @if (producer.error(); as message) {
+        <p>{{ message }}</p>
+        <button mat-button type="button" (click)="producer.retry()">Retry</button>
       }
     </div>
     <router-outlet />
