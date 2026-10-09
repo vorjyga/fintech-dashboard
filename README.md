@@ -1,6 +1,6 @@
 # Fintech Dashboard
 
-An Angular application for simulated market data, based on the [original assignment](Senior%20Frontend%20Developer%20Task.docx). The [Russian translation](Senior%20Frontend%20Developer%20Task.ru.md), [implementation plan](docs/implementation-plan.md), and [requirements matrix](docs/requirements-matrix.md) are included.
+An Angular application for simulated market data, based on the [original assignment](Senior%20Frontend%20Developer%20Task.docx).
 
 [Repository](https://github.com/vorjyga/fintech-dashboard) · [Live demo](https://vorjyga.github.io/fintech-dashboard/#/dashboard) · [CI and deployments](https://github.com/vorjyga/fintech-dashboard/actions/workflows/ci-pages.yml)
 
@@ -47,8 +47,6 @@ Tests execute both real compiled generators and verify batch sizes, valid values
 
 The worker downloads `wasm/market.wasm` relative to `document.baseURI`, checks HTTP status and uses `WebAssembly.instantiate` on an ArrayBuffer. A root service owns the worker across navigation. AssemblyScript aborts and native worker errors produce visible messages; Retry creates a new worker. On initialization the Worker creates a seed and calls the generator’s init export. The generator is implemented and tested; continuous generation and metric snapshots are implemented in the worker controller. See [the generator ABI and model](assembly/README.md).
 
-The package overrides keep Vitest and its optional browser peer on 4.1.11. This avoids npm 10 resolving mismatched Vitest 4/5 peers and keeps the test toolchain on the audited version.
-
 ## Metric calculations
 
 `src/app/worker/market-aggregator.ts` is independent of Angular and the Worker API. Create one `MarketAggregator` per run and call `consume(update)` once for every generated trade (or `consumeBatch(iterable)`). It stores only latest trade/book values and cumulative volume/cost for each instrument, without retaining events or batches. Identical trades are separate events and are counted separately.
@@ -80,23 +78,3 @@ Editing the form changes a local draft. Apply always clears metrics and creates 
 Pause waits for the Worker acknowledgement and a final snapshot. Resume keeps totals and starts a full new interval, with no trades for the paused time. Navigation preserves the single root producer. Status progresses through initializing, running, pausing, paused, resuming or error; controls are disabled while acknowledgement is pending. On error the last snapshot remains visible. Retry starts a fresh run with the last applied settings.
 
 RxJS represents Worker message/error streams; Signals represent current UI state. The service rejects old run IDs, nonincreasing snapshot sequences and incorrect command acknowledgements before updating Signals. Replacement/destruction unsubscribes listeners and terminates the Worker. No Subject mirrors Signal state.
-
-## CI and deployment
-
-[`.github/workflows/ci-pages.yml`](.github/workflows/ci-pages.yml) uses Node from `.nvmrc`, installs with `npm ci`, runs lint and all tests, then builds the production application with `/fintech-dashboard/` as its base href. Branches and pull requests validate; only pushes to `main` upload and deploy the Pages artifact. This main-only publishing policy was agreed for the assignment.
-
-Pages uses GitHub Actions as its source, `configure-pages`, `upload-pages-artifact`, `deploy-pages`, and the `github-pages` environment. Deployment permissions are scoped to its job. Workflow concurrency serializes each ref through validation and deployment so an old run cannot overwrite a newer deployment. No credentials are required to view the public repository or demo.
-
-Hash routes support direct loading and reloading of `#/settings` on static hosting. Wasm is fetched relative to `document.baseURI` with `cache: 'no-cache'`, which revalidates an existing HTTP cache entry. Angular/Worker bundles have content hashes. The workflow emits `build-info.json` with the deployed Git commit SHA so an automatic update can be verified.
-
-See the [stage 9 browser validation](docs/stage-9-report.md), [deployment report](docs/stage-10-report.md) and [requirements matrix](docs/requirements-matrix.md). CI follows the [GitHub Pages custom workflow documentation](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
-
-## Scope and interview discussion
-
-This is a browser-only simulation: no backend, real market feed, order matching, authentication, charts, trade history, storage or SSR. It requires a modern browser with WebAssembly, Web Workers, bigint and structured clone support. The random walk is deliberately simple and is not a financial model or cryptographic generator; the Worker supplies a random initial seed, while deterministic seeds are available in tests.
-
-The fixed Wasm buffer and per-instrument aggregates avoid memory growth with the number of trades. Prices use integer cents; accumulated volume and cost use bigint. Currency values and VWAP are rounded only at the UI boundary. Every trade is consumed, while ordinary table snapshots are limited to about ten per second. Initial and final Pause snapshots bypass this limit. Browser timers may slow in background tabs; there is no catch-up generation.
-
-Material supplies the table, fields, buttons, progress and snackbar. Tailwind supplies container layout, spacing and breakpoints. Theme/custom styles use Material system tokens and public APIs; no private Material selectors or `::ng-deep` overrides. Tailwind Preflight is disabled; CSS utilities and the SCSS theme are separate files. Baseline heading/paragraph margins are in CSS layer `base`, allowing utility spacing to take effect.
-
-Useful extension points: add a feed adapter behind the controller, replace the seeded generator through the versioned numeric ABI, add metrics in the bounded aggregator, or extend the shared settings contract/validation. Tests inject time and Worker dependencies so lifecycle changes can be checked without long real-time waits. A real feed would need reconnection, backpressure and retention decisions; charts would need an explicitly bounded history.
