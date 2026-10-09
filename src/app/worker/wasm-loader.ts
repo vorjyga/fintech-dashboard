@@ -1,4 +1,5 @@
 import { WASM_ABI_VERSION, MarketWasmExports, ProducerErrorStage } from '../shared/contracts';
+import { errorMessage } from '../shared/error-message';
 
 export class WasmInitializationError extends Error {
   constructor(
@@ -80,8 +81,4 @@ export async function loadWasm(wasmUrl: string, signal?: AbortSignal): Promise<M
     }
   }
   return wasm;
-}
-
-export function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }

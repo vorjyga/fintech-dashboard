@@ -5,12 +5,13 @@ import type {
   ProducerSettings,
 } from '../shared/contracts';
 import { MARKET_UPDATE_BYTES } from '../shared/contracts';
+import { errorMessage } from '../shared/error-message';
 import { isValidProducerSettings } from '../shared/producer-settings';
 import { MarketAggregator } from './market-aggregator';
-import { errorMessage, loadWasm, WasmInitializationError } from './wasm-loader';
+import { WasmInitializationError } from './wasm-loader';
 
 export interface ProducerDependencies {
-  load: typeof loadWasm;
+  load: (wasmUrl: string, signal?: AbortSignal) => Promise<MarketWasmExports>;
   now: () => number;
   setTimer: (callback: () => void, delayMs: number) => unknown;
   clearTimer: (timer: unknown) => void;

@@ -19,6 +19,7 @@ const trade = (changes: Partial<MarketUpdate> = {}): MarketUpdate => ({
 });
 
 describe('Market aggregation', () => {
+  // Checks stable symbols, zero volume and unavailable metrics before the first trade.
   it('provides stable symbols, zero volume and unavailable initial metrics for all instruments', () => {
     const rows = new MarketAggregator(50).snapshot();
     expect(rows).toHaveLength(50);
@@ -44,6 +45,7 @@ describe('Market aggregation', () => {
     );
   });
 
+  // Checks calculation and display of every metric using the worked assignment example.
   it('matches the worked assignment example including display values', () => {
     const aggregator = new MarketAggregator(1);
     aggregator.consumeBatch([
@@ -65,30 +67,97 @@ describe('Market aggregation', () => {
     expect(formatImbalance(row.imbalance)).toBe('0.20');
   });
 
-  it('keeps instrument totals independent and keeps untraded instruments unavailable', () => {
+  // Checks all metrics per symbol across interleaved batches and unavailable values for untraded instruments.
+  it('keeps every metric independent per symbol across interleaved batches', () => {
     const aggregator = new MarketAggregator(3);
     aggregator.consumeBatch([
       trade(),
       trade({
         instrumentId: 1,
         priceCents: 20000,
-        tradeQuantity: 20,
-        bidCents: 19996,
-        askCents: 20000,
+        tradeQuantity: 2,
+        bidCents: 20000,
+        askCents: 20010,
+        bidQuantity: 100,
+        askQuantity: 300,
       }),
-      trade({ priceCents: 10200, tradeQuantity: 30, bidCents: 10196, askCents: 10200 }),
+    ]);
+    const untraded = {
+      instrumentId: 2,
+      symbol: 'GAMMA',
+      lastPriceCents: null,
+      spreadCents: null,
+      volume: 0n,
+      vwap: null,
+      imbalance: null,
+    };
+    expect(aggregator.snapshot()).toEqual([
+      {
+        instrumentId: 0,
+        symbol: 'ALFA',
+        lastPriceCents: 10000,
+        spreadCents: 4,
+        volume: 10n,
+        vwap: { numeratorCents: 100000n, denominator: 10n },
+        imbalance: 0.2,
+      },
+      {
+        instrumentId: 1,
+        symbol: 'BETA',
+        lastPriceCents: 20000,
+        spreadCents: 10,
+        volume: 2n,
+        vwap: { numeratorCents: 40000n, denominator: 2n },
+        imbalance: -0.5,
+      },
+      untraded,
+    ]);
+
+    aggregator.consumeBatch([
+      trade({
+        instrumentId: 1,
+        priceCents: 21000,
+        tradeQuantity: 6,
+        bidCents: 20970,
+        askCents: 21000,
+        bidQuantity: 900,
+        askQuantity: 100,
+      }),
+      trade({
+        priceCents: 10200,
+        tradeQuantity: 30,
+        bidCents: 10180,
+        askCents: 10200,
+        bidQuantity: 200,
+        askQuantity: 800,
+      }),
     ]);
     const rows = aggregator.snapshot();
-    expect(rows[0].volume).toBe(40n);
-    expect(rows[0].vwap).toEqual({ numeratorCents: 406000n, denominator: 40n });
-    expect(rows[1]).toMatchObject({
-      lastPriceCents: 20000,
-      volume: 20n,
-      vwap: { numeratorCents: 400000n, denominator: 20n },
-    });
-    expect(rows[2]).toMatchObject({ volume: 0n, vwap: null, lastPriceCents: null });
+    expect(rows).toEqual([
+      {
+        instrumentId: 0,
+        symbol: 'ALFA',
+        lastPriceCents: 10200,
+        spreadCents: 20,
+        volume: 40n,
+        vwap: { numeratorCents: 406000n, denominator: 40n },
+        imbalance: -0.6,
+      },
+      {
+        instrumentId: 1,
+        symbol: 'BETA',
+        lastPriceCents: 21000,
+        spreadCents: 30,
+        volume: 8n,
+        vwap: { numeratorCents: 166000n, denominator: 8n },
+        imbalance: 0.8,
+      },
+      untraded,
+    ]);
+    expect(rows.map((row) => formatVwap(row.vwap))).toEqual(['$101.50', '$207.50', '—']);
   });
 
+  // Checks that every repeated trade is counted and book quantities do not contribute to trading volume.
   it('counts repeated and identical trades individually across batches; book quantities are not trading volume', () => {
     const aggregator = new MarketAggregator(1);
     const update = trade({ tradeQuantity: 3, bidQuantity: 10000, askQuantity: 10000 });
@@ -100,6 +169,7 @@ describe('Market aggregation', () => {
     });
   });
 
+  // Checks spread and imbalance calculations using the latest order book snapshot.
   it('uses only the latest book snapshot for spread and imbalance', () => {
     const aggregator = new MarketAggregator(1);
     aggregator.consume(trade());
@@ -111,6 +181,7 @@ describe('Market aggregation', () => {
     expect(aggregator.snapshot()[0].imbalance).toBe(1);
   });
 
+  // Checks unavailable imbalance for an empty order book while still counting the trade.
   it('returns unavailable imbalance for a zero book denominator and still counts the trade', () => {
     const aggregator = new MarketAggregator(1);
     aggregator.consume(trade({ bidQuantity: 0, askQuantity: 0 }));
@@ -121,6 +192,7 @@ describe('Market aggregation', () => {
     });
   });
 
+  // Checks exact products and sums beyond the safe Number range.
   it('preserves exact products and accumulated quantities beyond Number.MAX_SAFE_INTEGER', () => {
     const aggregator = new MarketAggregator(1);
     const maximum = Number.MAX_SAFE_INTEGER;
@@ -133,6 +205,7 @@ describe('Market aggregation', () => {
     });
   });
 
+  // Checks that VWAP is not rounded internally and reading snapshots does not reset totals.
   it('does not round intermediate VWAP and snapshots do not reset accumulated totals', () => {
     const aggregator = new MarketAggregator(1);
     aggregator.consume(trade({ priceCents: 10000, tradeQuantity: 1 }));
@@ -143,6 +216,7 @@ describe('Market aggregation', () => {
     expect(formatVwap(aggregator.snapshot()[0].vwap)).toBe('$100.00');
   });
 
+  // Checks that later changes to inputs and snapshots cannot alter accumulated totals.
   it('copies scalar inputs and returns detached snapshots', () => {
     const aggregator = new MarketAggregator(1);
     const update = trade();
@@ -159,6 +233,7 @@ describe('Market aggregation', () => {
     });
   });
 
+  // Checks that a new aggregator starts with empty totals.
   it('a new aggregator starts with fresh state', () => {
     const previous = new MarketAggregator(1);
     previous.consume(trade());
@@ -169,6 +244,7 @@ describe('Market aggregation', () => {
     });
   });
 
+  // Checks rejection of invalid instrument counts and unknown trade instrument IDs.
   it('rejects invalid instrument counts and unknown update instruments', () => {
     for (const count of [0, 51, -1, 1.5, NaN, Infinity])
       expect(() => new MarketAggregator(count)).toThrow(RangeError);

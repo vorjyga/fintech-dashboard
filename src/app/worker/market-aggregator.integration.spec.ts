@@ -7,6 +7,7 @@ import { MarketAggregator } from './market-aggregator';
 
 /** Execute the same release binary shipped in the application's public assets. */
 describe('Real Wasm and market aggregation', () => {
+  // Checks real Wasm decoding and accounting for every trade before the buffer is overwritten.
   it('decodes the numeric ABI and accounts for every trade before buffer reuse', async () => {
     const bytes = await readFile('public/wasm/market.wasm');
     const { instance } = await WebAssembly.instantiate(bytes, {

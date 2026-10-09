@@ -47,6 +47,7 @@ function validateBatch(words, count, previousBids) {
 for (const file of files) {
   const bytes = await readFile(file);
   describe(file, () => {
+    // Проверяет числовой ABI, размер памяти и отсутствие импорта случайности из JavaScript.
     test('exports the numeric ABI and does not import host randomness', async () => {
       assert.equal(WebAssembly.validate(bytes), true);
       const wasm = await instantiate(bytes);
@@ -63,6 +64,7 @@ for (const file of files) {
       );
     });
 
+    // Проверяет запрет генерации до инициализации и отклонение неверного числа инструментов.
     test('rejects generation before init and invalid instrument counts', async () => {
       const wasm = await instantiate(bytes);
       assert.equal(wasm.generateBatch(1), 0);
@@ -74,6 +76,7 @@ for (const file of files) {
       for (let count = 1; count <= 50; count++) assert.equal(wasm.init(count, 1), 0);
     });
 
+    // Проверяет размеры пакетов и корректность обновлений для всех допустимых чисел инструментов.
     test('returns every supported batch size and valid continuous updates for every instrument count', async () => {
       const wasm = await instantiate(bytes);
       for (let count = 1; count <= 50; count++) {
@@ -86,6 +89,7 @@ for (const file of files) {
       for (let size = 1; size <= 1000; size++) readBatch(wasm, size);
     });
 
+    // Проверяет эталонную последовательность по seed и порядок байтов записи little-endian.
     test('matches the fixed seed vector and little-endian record layout', async () => {
       const wasm = await instantiate(bytes);
       wasm.init(5, 1);
@@ -95,6 +99,7 @@ for (const file of files) {
       assert.deepEqual(words, [4, 13998, 234, 13996, 13998, 962, 2245]);
     });
 
+    // Проверяет совпадение последовательностей для одинаковых seed и различие для разных.
     test('repeats identical seeds across independent instances and varies different seeds', async () => {
       const first = await instantiate(bytes);
       const second = await instantiate(bytes);
@@ -109,6 +114,7 @@ for (const file of files) {
       assert.notDeepEqual(readBatch(first, 100), readBatch(second, 100));
     });
 
+    // Проверяет замену нулевого seed фиксированным ненулевым значением и разнообразие инструментов.
     test('maps seed zero to a fixed nonzero seed without degenerating', async () => {
       const first = await instantiate(bytes);
       const second = await instantiate(bytes);
@@ -120,6 +126,7 @@ for (const file of files) {
       assert.equal(ids.size, 5);
     });
 
+    // Проверяет непрерывность случайной последовательности и цен при разбиении на пакеты.
     test('continues PRNG and instrument prices across arbitrary batch boundaries', async () => {
       const split = await instantiate(bytes);
       const whole = await instantiate(bytes);
@@ -130,6 +137,7 @@ for (const file of files) {
       assert.deepEqual(readBatch(split, 100), readBatch(whole, 100));
     });
 
+    // Проверяет сброс цен, случайного состояния и длины пакета при повторной инициализации.
     test('reinitialization resets prices, random state and batch length after changing count', async () => {
       const wasm = await instantiate(bytes);
       wasm.init(5, 123);
@@ -143,6 +151,7 @@ for (const file of files) {
       assert.deepEqual(readBatch(wasm, 1000), expected);
     });
 
+    // Проверяет, что неверный размер пакета сбрасывает длину, сохраняя цены, случайное состояние и буфер.
     test('invalid batches clear length without changing prices, PRNG or buffer data', async () => {
       const first = await instantiate(bytes);
       const second = await instantiate(bytes);
@@ -158,6 +167,7 @@ for (const file of files) {
       assert.deepEqual(readBatch(first, 100), readBatch(second, 100));
     });
 
+    // Проверяет сохранение действующего запуска после неверной повторной инициализации.
     test('invalid init preserves an existing valid run', async () => {
       const first = await instantiate(bytes);
       const second = await instantiate(bytes);
@@ -169,6 +179,7 @@ for (const file of files) {
       assert.deepEqual(readBatch(first, 1000), readBatch(second, 1000));
     });
 
+    // Проверяет удержание цены bid на нижней и верхней границах.
     test('clamps bids at both boundaries using controlled initial memory', async () => {
       const wasm = await instantiate(bytes);
       for (const boundary of [1, 1_000_000]) {
@@ -189,6 +200,7 @@ for (const file of files) {
       }
     });
 
+    // Проверяет повторное использование буфера без роста памяти после 2000 максимальных пакетов.
     test('reuses one buffer without growing or replacing memory over 2000 maximum batches', async () => {
       const wasm = await instantiate(bytes);
       wasm.init(50, 1);
@@ -206,6 +218,7 @@ for (const file of files) {
   });
 }
 
+// Проверяет совпадение последовательностей debug- и release-модулей.
 test('debug and release modules produce identical sequences', async () => {
   const debug = await instantiate(await readFile(files[0]));
   const release = await instantiate(await readFile(files[1]));

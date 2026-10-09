@@ -21,6 +21,7 @@ describe('Wasm loader', () => {
     vi.unstubAllGlobals();
   });
 
+  // Checks ArrayBuffer loading with cancellation support and ABI validation.
   it('fetches an ArrayBuffer with cancellation and verifies the ABI', async () => {
     const memory = new WebAssembly.Memory({ initial: 1 });
     const instantiate = mockModule({ ...generatorExports, memory, abiVersion: () => 1 });
@@ -35,6 +36,7 @@ describe('Wasm loader', () => {
     expect(instantiate.mock.calls[0][0]).toBeInstanceOf(ArrayBuffer);
   });
 
+  // Checks HTTP error reporting without attempting to instantiate Wasm.
   it('reports HTTP errors without trying to instantiate', async () => {
     vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 404 }));
     const instantiate = vi.spyOn(WebAssembly, 'instantiate');
@@ -45,6 +47,7 @@ describe('Wasm loader', () => {
     expect(instantiate).not.toHaveBeenCalled();
   });
 
+  // Checks the correct error stage for network failures and invalid binary modules.
   it('reports network and invalid binary errors with their initialization stage', async () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error('Offline'));
     await expect(loadWasm('/market.wasm')).rejects.toMatchObject({
@@ -55,6 +58,7 @@ describe('Wasm loader', () => {
     await expect(loadWasm('/market.wasm')).rejects.toMatchObject({ stage: 'instantiate' });
   });
 
+  // Checks rejection of modules with missing exports or incompatible ABI versions.
   it('rejects missing exports and incompatible ABI versions', async () => {
     const instantiate = mockModule({});
     await expect(loadWasm('/market.wasm')).rejects.toMatchObject({ stage: 'abi' });
@@ -72,6 +76,7 @@ describe('Wasm loader', () => {
     });
   });
 
+  // Checks rejection of a compatible ABI version without required generator functions.
   it('rejects an ABI version 1 module without the generator exports', async () => {
     mockModule({ memory: new WebAssembly.Memory({ initial: 1 }), abiVersion: () => 1 });
     await expect(loadWasm('/market.wasm')).rejects.toMatchObject({
@@ -80,6 +85,7 @@ describe('Wasm loader', () => {
     });
   });
 
+  // Checks that AssemblyScript abort becomes a meaningful runtime error.
   it('turns AssemblyScript abort into a meaningful runtime error', async () => {
     const instantiate = mockModule({
       ...generatorExports,
@@ -93,6 +99,7 @@ describe('Wasm loader', () => {
     expect(() => imports.env.abort(0, 0, 12, 4)).toThrow('aborted at 12:4');
   });
 
+  // Checks that a cancelled load does not instantiate Wasm.
   it('does not instantiate after cancellation', async () => {
     const controller = new AbortController();
     controller.abort();

@@ -1,5 +1,6 @@
 import type { InstrumentSnapshot, MarketUpdate } from '../shared/contracts';
 import { instrumentSymbol } from '../shared/instrument-symbol';
+import { isIntegerInRange, PRODUCER_SETTING_LIMITS } from '../shared/producer-settings';
 
 interface InstrumentTotals {
   lastPriceCents: number | null;
@@ -16,8 +17,9 @@ export class MarketAggregator {
   private readonly totals: InstrumentTotals[];
 
   constructor(instrumentCount: number) {
-    if (!Number.isInteger(instrumentCount) || instrumentCount < 1 || instrumentCount > 50) {
-      throw new RangeError('Instrument count must be an integer from 1 to 50.');
+    const { min, max } = PRODUCER_SETTING_LIMITS.instrumentCount;
+    if (!isIntegerInRange(instrumentCount, min, max)) {
+      throw new RangeError(`Instrument count must be an integer from ${min} to ${max}.`);
     }
     this.totals = Array.from({ length: instrumentCount }, () => ({
       lastPriceCents: null,

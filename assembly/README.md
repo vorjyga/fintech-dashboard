@@ -1,5 +1,7 @@
 # AssemblyScript market generator
 
+`tsconfig.json` inherits AssemblyScript's recommended editor configuration, including its built-in types (`i32`, `u32`, `usize`, `memory`, `load`, and `store`). This keeps editor type checking separate from Angular's TypeScript configuration. Run `npx tsc -p assembly/tsconfig.json` to check editor diagnostics; `npm run build:wasm` compiles the actual Wasm module with AssemblyScript using the root `asconfig.json`.
+
 `index.ts` implements the numeric ABI in `src/app/shared/contracts.ts`:
 
 | Export | Meaning |

@@ -83,6 +83,7 @@ function deferred<T>() {
 }
 
 describe('Worker producer controller', () => {
+  // Checks initial events and a full interval delay before the first batch.
   it('initializes, sends empty rows and running, and waits a full interval before the first batch', async () => {
     const { controller, clock, wasm, events } = setup();
     await controller.handle(start(1, { batchIntervalMs: 500, instrumentCount: 2 }));
@@ -108,6 +109,7 @@ describe('Worker producer controller', () => {
     });
   });
 
+  // Checks snapshot throttling to once per 100 ms without skipping trades.
   it('throttles normal snapshots to 100 ms while accounting for all intervening trades', async () => {
     const { controller, clock, wasm, events, snapshotTimes } = setup();
     await controller.handle(start());
@@ -127,6 +129,7 @@ describe('Worker producer controller', () => {
     expect(snapshots(events).map((event) => event.sequence)).toEqual([1, 2, 3, 4]);
   });
 
+  // Checks that pause stops generation and resume preserves totals after a full interval delay.
   it('pause cancels generation; resume preserves the same Wasm/totals and waits a full interval', async () => {
     const { controller, clock, wasm, events, load } = setup();
     await controller.handle(start());
@@ -148,6 +151,7 @@ describe('Worker producer controller', () => {
     expect(wasm.init).toHaveBeenCalledOnce();
   });
 
+  // Checks pausing before the first trade without generating data for the paused interval.
   it('can pause before the first trade without generating missed data', async () => {
     const { controller, clock, wasm, events } = setup();
     await controller.handle(start());
@@ -160,6 +164,7 @@ describe('Worker producer controller', () => {
     expect(wasm.generateBatch).toHaveBeenCalledOnce();
   });
 
+  // Checks rejection of stale commands and prevents extra timers on repeated Resume.
   it('ignores old run/command ids and repeated resume cannot create a second timer or delay the first', async () => {
     const { controller, clock, events } = setup();
     await controller.handle(start());
@@ -177,6 +182,7 @@ describe('Worker producer controller', () => {
     expect([...clock.tasks.values()][0].at).toBe(deadline);
   });
 
+  // Checks that a cancelled callback cannot generate early after Resume.
   it('a canceled callback cannot generate early after resume', async () => {
     const { controller, clock, wasm } = setup();
     await controller.handle(start());
@@ -190,6 +196,7 @@ describe('Worker producer controller', () => {
     expect(wasm.generateBatch).toHaveBeenCalledOnce();
   });
 
+  // Checks that delays start after batch processing without catching up missed intervals.
   it('schedules after processing finishes and never catches up a late callback', async () => {
     const { controller, clock, wasm } = setup();
     const generate = wasm.generateBatch.getMockImplementation()!;
@@ -207,6 +214,7 @@ describe('Worker producer controller', () => {
     expect([...clock.tasks.values()][0].at).toBe(2130);
   });
 
+  // Checks that loading completes before scheduling and settings are copied before awaiting.
   it('does not schedule before loading completes and copies settings before await', async () => {
     const { controller, clock, load, wasm } = setup();
     const pending = deferred<MarketWasmExports>();
@@ -224,6 +232,7 @@ describe('Worker producer controller', () => {
     expect(wasm.generateBatch).toHaveBeenCalledExactlyOnceWith(2);
   });
 
+  // Checks cancellation of a superseded load and rejection of its late successful result.
   it('aborts a superseded load and ignores its late successful completion', async () => {
     const { controller, clock, load, events } = setup();
     const pending = deferred<MarketWasmExports>();
@@ -240,6 +249,7 @@ describe('Worker producer controller', () => {
     expect(clock.tasks.size).toBe(1);
   });
 
+  // Checks that load errors from a previous run are ignored.
   it('ignores a superseded load error', async () => {
     const { controller, load, events } = setup();
     const pending = deferred<MarketWasmExports>();
@@ -251,6 +261,7 @@ describe('Worker producer controller', () => {
     expect(events.some((event) => event.type === 'error')).toBe(false);
   });
 
+  // Checks that restart resets metrics and rejects already queued callbacks from the previous run.
   it('restart resets metrics and cancels old callbacks even if the timer was already queued', async () => {
     const { controller, clock, wasm, events } = setup();
     await controller.handle(start(1));
@@ -269,6 +280,7 @@ describe('Worker producer controller', () => {
     expect(snapshots(events).at(-1)?.rows[0].volume).toBe(4n);
   });
 
+  // Checks timer cleanup and prevents further work after dispose.
   it('dispose frees timers and prevents further events and starts', async () => {
     const { controller, clock, wasm, events, load } = setup();
     await controller.handle(start());
@@ -282,6 +294,7 @@ describe('Worker producer controller', () => {
     expect(load).toHaveBeenCalledOnce();
   });
 
+  // Checks load cancellation during dispose and rejection of its completion.
   it('dispose during initialization cancels the load and ignores completion', async () => {
     const { controller, load, wasm, events } = setup();
     const pending = deferred<MarketWasmExports>();
@@ -295,6 +308,7 @@ describe('Worker producer controller', () => {
     expect(events).toEqual([]);
   });
 
+  // Checks rejection of invalid settings before loading Wasm and stopping the previous run.
   it('invalid settings reject start before fetch and cancel a previous run', async () => {
     const { controller, clock, wasm, events, load } = setup();
     await controller.handle(start());
@@ -306,6 +320,7 @@ describe('Worker producer controller', () => {
     expect(wasm.generateBatch).not.toHaveBeenCalled();
   });
 
+  // Checks Wasm initialization rejection without sending ready or scheduling a timer.
   it('rejects nonzero init result without reporting ready or scheduling', async () => {
     const { controller, clock, wasm, events } = setup();
     wasm.init.mockReturnValue(1);
@@ -321,6 +336,7 @@ describe('Worker producer controller', () => {
     expect(clock.tasks.size).toBe(0);
   });
 
+  // Checks that each initialization error retains its stage and stops the run.
   it.each(['load', 'instantiate', 'abi', 'runtime'] as const)(
     'preserves %s initialization errors and stops',
     async (stage) => {
@@ -332,6 +348,7 @@ describe('Worker producer controller', () => {
     },
   );
 
+  // Checks that generation errors stop the run and a new start restores operation.
   it('stops on generator failure and can retry with a new start', async () => {
     const { controller, clock, wasm, events } = setup();
     await controller.handle(start());
@@ -356,6 +373,7 @@ describe('Worker producer controller', () => {
     expect(snapshots(events).at(-1)?.rows[0].volume).toBe(4n);
   });
 
+  // Checks that a zero or out-of-bounds batch pointer stops the run.
   it.each([0, 65536])('stops on invalid batch pointer %s', async (pointer) => {
     const { controller, clock, wasm, events } = setup();
     await controller.handle(start());
@@ -370,6 +388,7 @@ describe('Worker producer controller', () => {
     expect(clock.tasks.size).toBe(0);
   });
 
+  // Checks that a batch length differing from the requested size stops the run.
   it('stops on mismatched batch length', async () => {
     const { controller, clock, wasm, events } = setup();
     await controller.handle(start());

@@ -3,13 +3,10 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../app.routes';
 import { MARKET_WORKER_FACTORY, ProducerService } from './producer.service';
-
-class FakeWorker extends EventTarget {
-  postMessage = vi.fn(); terminate = vi.fn();
-  send(data: unknown) { this.dispatchEvent(new MessageEvent('message', { data })); }
-}
+import { FakeWorker } from './testing/fake-worker';
 
 describe('Producer across lazy navigation', () => {
+  // Checks that navigation preserves the worker, settings and totals while discarding unapplied drafts.
   it('keeps one worker, applied settings and paused totals while discarding drafts', async () => {
     const worker = new FakeWorker(), factory = vi.fn(() => worker);
     TestBed.configureTestingModule({ providers: [provideRouter(routes), { provide: MARKET_WORKER_FACTORY, useValue: factory }] });
